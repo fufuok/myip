@@ -12,6 +12,7 @@ import (
 var externalIPAPI = map[string][]string{
 	"ipv4": {
 		"http://api.ipify.org",
+		"http://ip-api.com/line/?fields=query",
 		"http://ifconfig.me/ip",
 		"http://ident.me",
 		"http://ip.cip.cc",

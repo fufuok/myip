@@ -2,6 +2,12 @@
 
 获取本机内网 / 公网 IP
 
+## 安装
+
+```shell
+go get github.com/fufuok/myip
+```
+
 ## 使用
 
 ```go
