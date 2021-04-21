@@ -24,28 +24,37 @@ var externalIPAPI = map[string][]string{
 	},
 }
 
+// 获取外网地址 (出口公网地址)
+func ExternalIP(v ...string) string {
+	if len(v) > 0 && v[0] != "ipv4" {
+		return ExternalIPv6()
+	}
+
+	return ExternalIPv4()
+}
+
 // 获取外网地址 (IPv4)
 func ExternalIPv4() string {
-	return ExternalIP("ipv4")
+	return getExternalIP("ipv4")
 }
 
 // 获取外网地址 (IPv6)
 func ExternalIPv6() string {
-	if ip := ExternalIP("ipv6"); ip != "" && strings.Count(ip, ":") > 1 {
+	if ip := getExternalIP("ipv6"); ip != "" && strings.Count(ip, ":") > 1 {
 		return ip
 	}
 
 	return ""
 }
 
-// 获取外网地址 (出口公网地址)
-func ExternalIP(v string) string {
-	if v != "ipv6" {
-		v = "ipv4"
+// 逐项请求外网地址
+func getExternalIP(v string) string {
+	if v != "ipv4" {
+		v = "ipv6"
 	}
 
 	for _, u := range externalIPAPI[v] {
-		if ip := getExternalIP(u); ip != "" {
+		if ip, ok := getAPI(u); ok {
 			return ip
 		}
 	}
@@ -54,13 +63,13 @@ func ExternalIP(v string) string {
 }
 
 // 请求 API 获取公网 IP
-func getExternalIP(u string) string {
+func getAPI(u string) (string, bool) {
 	client := &http.Client{
 		Timeout: 10 * time.Second,
 	}
 	resp, err := client.Get(u)
 	if err != nil {
-		return ""
+		return "", false
 	}
 
 	defer func() {
@@ -69,15 +78,15 @@ func getExternalIP(u string) string {
 
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return ""
+		return "", false
 	}
 
 	ip := net.ParseIP(strings.TrimSpace(*(*string)(unsafe.Pointer(&b))))
 	if ip != nil {
-		return ip.String()
+		return ip.String(), true
 	}
 
-	return ""
+	return "", resp.StatusCode == http.StatusOK
 }
 
 // 获取内网地址 (IPv4)
